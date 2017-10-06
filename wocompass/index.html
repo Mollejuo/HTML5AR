@@ -1,0 +1,458 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Nearby</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="Copyright" content="&copy; 2013, Intel Corporation. All rights reserved." />
+    <meta name="Author" content="Rakshith Krishnappa" />
+<!--
+ * Copyright (c) 2013, Intel Corporation. All rights reserved.
+ * Please see http://software.intel.com/html5/license/samples 
+ * and the included README.md file for license terms and conditions.
+-->      
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+   <!--  <script src="https://maps.googleapis.com/maps/api/js"></script> -->
+
+   <script  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCSOaGZCX443iqTiwp9xnIxNABV6eRkVt8"> </script>
+
+    <script src="js/jquery-1.8.2.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+      <script src="https://aframe.io/releases/0.7.0/aframe.min.js"></script>
+   <!--  <script src="cordova.js"></script> -->
+    <script>
+var pin = [];        
+var markersArray = [], bounds;
+var myLat = 0, myLng = 0; 
+var bearing, distance;
+var dataStatus = 0; 
+var deviceorientationinterval=null;               
+// setup map and listen to deviceready        
+$( document ).ready(function() {
+
+    $.get('js/data.json',function(data){
+        pin=data;
+    }).complete(function (data) {
+         onDeviceReady();
+    });
+   
+    //document.addEventListener("deviceready", onDeviceReady, false);
+});
+// start device compass, accelerometer and geolocation after deviceready        
+function onDeviceReady() {
+    //navigator.splashscreen.hide();
+    //startCamera();
+    setupMap();
+    // start cordova device sensors
+    startAccelerometer();
+    startCompass();
+    startGeolocation();
+}
+
+function startCamera() {
+    // ezar.initializeVideoOverlay(
+    //     function() {
+    //         ezar.getBackCamera().start();
+    //     },
+    //     function(error) {
+    //         alert("ezar initialization failed");
+    //     });
+}  
+
+
+// setup google maps api        
+function setupMap(){
+    $("#map").height($(window).height()-60);
+    var mapOptions = {
+        zoom: 13,
+        mapTypeControl: false,
+        streetViewControl: false,
+        navigationControl: true,
+        scrollwheel: false,
+        navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    map = new google.maps.Map(document.getElementById("map"), mapOptions);
+}        
+// toggle between list view and map view        
+function toggleView(){
+    if($(".listView").is(":visible")){
+        $(".listView").hide();
+        $("#map").height($(window).height()-60);
+        $(".mapView").fadeIn(
+            function(){
+                google.maps.event.trigger(map, "resize");
+                map.fitBounds(bounds);});
+        $("#viewbtn").html("List");
+    } else {
+        $(".mapView").hide();
+        $(".listView").fadeIn();
+        $("#viewbtn").html("Map");
+    }
+}
+// get data from API and store in array, add to list view and create markers on map, calculate         
+function loadData(){
+    dataStatus = "loading";
+    markersArray = [];
+    bounds = new google.maps.LatLngBounds();
+    // add blue gps marker
+    var icon = new google.maps.MarkerImage('http://www.google.com/intl/en_us/mapfiles/ms/micons/blue-dot.png',new google.maps.Size(30, 28),new google.maps.Point(0,0),new google.maps.Point(9, 28));
+    var gpsMarker = new google.maps.Marker({position: new google.maps.LatLng(myLat, myLng), map: map, title: "My Position", icon:icon});
+    bounds.extend(new google.maps.LatLng(myLat, myLng));
+    markersArray.push(gpsMarker);
+    // add all location markers to map and list view and array
+    for(var i=0; i< pin.length; i++){
+        $(".listItems").append("<div class='item'>"+pin[i].name+"</div>");
+        addMarker(i);
+        relativePosition(i);
+    }
+    map.fitBounds(bounds);
+    google.maps.event.trigger(map, "resize");
+    dataStatus = "loaded";   
+}
+// add marker to map and in array        
+function addMarker(i){
+    var marker = new google.maps.Marker({position: new google.maps.LatLng(pin[i].lat, pin[i].lng), map: map, title: pin[i].name});
+    bounds.extend(new google.maps.LatLng(pin[i].lat, pin[i].lng));
+    markersArray.push(marker);
+} 
+// clear all markers from map and array        
+function clearMarkers() {
+    while (markersArray.length) {
+        markersArray.pop().setMap(null);
+    }
+}        
+// calulate distance and bearing value for each of the points wrt gps lat/lng        
+function relativePosition(i){
+    var pinLat = pin[i].lat;
+    var pinLng = pin[i].lng;
+    var dLat = (myLat-pinLat)* Math.PI / 180;
+    var dLon = (myLng-pinLng)* Math.PI / 180;
+    var lat1 = pinLat * Math.PI / 180;
+    var lat2 = myLat * Math.PI / 180;
+    var y = Math.sin(dLon) * Math.cos(lat2);
+    var x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+    bearing = Math.atan2(y, x) * 180 / Math.PI;
+    bearing = bearing + 180;
+    pin[i]['bearing'] = bearing;
+    
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    distance = 3958.76  * c;
+    pin[i]['distance'] = distance;
+}
+// calculate direction of points and display        
+function calculateDirection(degree){
+    var detected = 0;
+    $("#spot").html("");
+
+    
+    for(var i=0;i<pin.length;i++){
+        if(Math.abs(pin[i].bearing - degree) <= 80){
+            //$('#direction-arrow').html(degree).show();
+            $('#direction-arrow').find('img').css({
+                '-ms-transform': 'rotate('+degree+'deg)',
+                '-webkit-transform': 'rotate('+degree+'deg)',
+                'transform': 'rotate('+degree+'deg)'
+            });
+            $('#direction-arrow').show();
+        }else{
+            //$('#direction-arrow').hide();
+        }
+
+        if(Math.abs(pin[i].bearing - degree) <= 20){
+            var away, fontSize, fontColor;
+            // varry font size based on distance from gps location
+            if(pin[i].distance>1500){
+                away = Math.round(pin[i].distance);
+                fontSize = "16";
+                fontColor = "#ccc";
+            } else if(pin[i].distance>500){
+                away = Math.round(pin[i].distance);
+                fontSize = "16";
+                fontColor = "#ddd";
+            } else {
+                away = pin[i].distance.toFixed(2);
+                fontSize = "16";
+                fontColor = "#eee";
+            }
+            // get3dhtml();
+            $("#spot").append('<div class="name poi" data-i="'+i+'" data-distance="'+away+'" data-name="'+pin[i].name+'" data-id="'+i+'" style="margin-left:'+(((pin[i].bearing - degree) * 5)+50)+'px;width:'+($(window).width()-100)+'px;font-size:'+fontSize+'px;color:'+fontColor+'"><img src="images/1200px-Subway_restaurant.svg.png" /></div>');
+            detected = 1;
+        } else {
+            if(!detected){
+                $("#spot").html("");
+            }
+        }
+    }
+
+}
+function get3dhtml(){
+    return "<a-scene embedded arjs='sourceType: webcam;'>"+
+            "<a-box position='0 0.2 0' material='opacity: 0.5;'></a-box>"+
+            "<a-marker-camera preset='hiro'></a-marker-camera>"+
+            "</a-scene>";
+    return '<iframe style="float:left;" src="d3.php" width="100" height="100" frameborder="0" allowfullscreen="true"></iframe>';
+}
+$(document).on('click','.poi',function(e){
+
+    var i=$(this).attr('data-i');
+    var poi_detail=pin[i];
+    var dist=poi_detail.distance.toFixed(3);
+    $('#poi-name').html(poi_detail.name);
+    $('#poi-distance').html(dist+" miles away");
+    $('#poi-lat').html(poi_detail.lat);
+    $('#poi-lon').html(poi_detail.lng);
+    //alert(name);
+     $('#poi-detail').animate({
+        "left": "0px",
+        "width":$(window).width(),
+        "height":$(window).height()
+    }, "slow");
+
+});
+
+$(document).on('click','.poi-close',function(){
+    $('#poi-detail').animate({
+        "left": "-1000px"
+    }, "slow");
+});
+// Start watching the geolocation        
+function startGeolocation(){
+    var options = { timeout: 30000 };
+    watchGeoID = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, options);
+}
+        
+// Stop watching the geolocation
+function stopGeolocation() {
+    if (watchGeoID) {
+        navigator.geolocation.clearWatch(watchGeoID);
+        watchGeoID = null;
+    }
+}
+        
+// onSuccess: Get the current location
+function onGeoSuccess(position) {
+    document.getElementById('geolocation').innerHTML = 'Latitude: ' + position.coords.latitude + '<br />' + 'Longitude: ' + position.coords.longitude;
+    myLat = position.coords.latitude;
+    myLng = position.coords.longitude;
+    if(!dataStatus){
+        loadData();
+    }
+}
+// onError: Failed to get the location
+function onGeoError() {
+    document.getElementById('log').innerHTML += "onError=.";
+} 
+    
+// Start watching the compass
+var old_compass_degree=0;
+var jkk=0;
+var compass_process=true;
+function startCompass() {
+         var options = { interval: 100 };
+    //watchCompassID = navigator.compass.watchHeading(onCompassSuccess, onCompassError, options);
+
+   
+
+        if (window.DeviceOrientationEvent) {
+             window.addEventListener('deviceorientation', onCompassSuccess,true); 
+             //setInterval(function(){                 
+             ///   compass_process=true;
+             //   //$('#test').html(jkk);
+             //   jkk++;
+            // },80);
+                 
+        }      
+
+    
+
+}
+// Stop watching the compass
+function stopCompass() {
+    if (watchCompassID) {
+        navigator.compass.clearWatch(watchCompassID);
+        watchCompassID = null;
+    }
+}
+// onSuccess: Get the current heading
+
+function onCompassSuccess(eventdata) {
+                        if(event.webkitCompassHeading) {                      
+                            compassdir = event.webkitCompassHeading;  
+                        }else{
+                            compassdir = event.alpha; 
+                        }                  
+
+                    // if(compass_process==true){
+
+                         var directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'N'];
+                         var direction = directions[Math.abs(parseInt((compassdir) / 45) + 1)];
+                         
+                         document.getElementById('compass').innerHTML = compassdir + "<br>" + direction;
+                         document.getElementById('direction').innerHTML = direction;
+                         var degree = Math.round(compassdir);                  
+                                             
+                         //$('#test').html(compassdir);
+                         //if($("#arView").is(":visible") && dataStatus != "loading"){
+                         var temp_degree_1=old_compass_degree+2;
+                         var temp_degree_2=old_compass_degree-2;                       
+                         //$('#test').html(degree+"  :  "+old_compass_degree);
+                         calculateDirection(degree);
+                     //}
+                     //compass_process=false;
+                     //}   
+                 old_compass_degree=Math.round(degree);
+    
+  
+}
+// onError: Failed to get the heading
+function onCompassError(compassError) {
+    document.getElementById('log').innerHTML += "onError=."+compassError.code;
+}        
+        
+// Start checking the accelerometer
+function startAccelerometer() {
+    //var options = { frequency: 100 };
+    //watchAccelerometerID = navigator.accelerometer.watchAcceleration(onAccelerometerSuccess, onAccelerometerError, options);
+
+
+     if(window.DeviceMotionEvent){
+        window.addEventListener("devicemotion", onAccelerometerSuccess, false);
+    }
+
+}
+// Stop checking the accelerometer
+function stopAccelerometer() {
+    if (watchAccelerometerID) {
+        navigator.accelerometer.clearWatch(watchAccelerometerID);
+        watchAccelerometerID = null;
+    }
+}
+// onSuccess: Get current accelerometer values
+function onAccelerometerSuccess(acceleration) {
+    // for debug purpose to print out accelerometer values
+    var element = document.getElementById('accelerometer');
+    element.innerHTML = 'Acceleration X: ' + acceleration.accelerationIncludingGravity.x + '<br />' +
+                        'Acceleration Y: ' + acceleration.accelerationIncludingGravity.y + '<br />' +
+                        'Acceleration Z: ' + acceleration.accelerationIncludingGravity.z ;
+    if(acceleration.accelerationIncludingGravity.y > 7){
+        $("#arView").fadeIn();
+        $("#topView").hide();
+        document.getElementById('body').style.background = "#d22";
+        document.getElementById('body').style.background = "transparent";
+    } else {
+        //$("#arView").hide();
+        //$("#topView").fadeIn();
+        //document.getElementById('body').style.background = "#fff";
+    }
+}
+// onError: Failed to get the acceleration
+function onAccelerometerError() {
+    document.getElementById('log').innerHTML += "onError.";
+}
+
+ function doSnapshot() {
+        //hide snapbtn so it will not be in snapshot image
+        document.getElementById("snapbtn").style.display = "none";
+        
+        //give dom chance to hide snapbtn before image capture
+        // setTimeout( function() { 
+        //     ezar.snapshot(  
+        //         function(data) {
+        //             alert("Snapshot complete.\nSee Gallery for image");
+        //             document.getElementById("snapbtn").style.display = "block";
+        //         }, 
+        //         function(err) {
+        //             alert("Error: " + err);
+        //             document.getElementById("snapbtn").style.display = "block";
+        //         },
+        //         {"saveToPhotoAlbum":true}
+        //     )}, 10);
+    } 
+    </script>
+<style type="text/css">
+    #test{
+        position: fixed;
+        z-index: 9999;
+        top: 10px;
+        left: 10px;
+        border: 1px solid red;
+        display: none;
+    }
+</style>
+  </head>
+  <body id="body" style="background-color: transparent"> 
+  <div id="test"></div>
+    <video id="camera" width="100%" height="100%"></video>
+    <div id="the-loader-overlay" style=""><div>Please Wait...</div></div>
+    <div id="arView" style="background-color: transparent">
+        <!-- <div class="arMessage">&uarr;<br>Tilt down to see all places</div>
+        <br>
+        <div class="arMessage">&larr; Move the device around to find spots &rarr;</div> -->
+        <!-- <br> -->
+        <div id="direction"></div>
+        <br>
+        <div class="spottextc" style="margin-left: auto; margin-right: auto;">
+            <div style="width: 50px;height: 50px; border: solid 0px red; margin-top: 10px; border-radius: 10px; margin-top: 30px;">
+              
+            </div>
+        </div>
+        <br>
+        <div id="spot">
+
+
+        </div>
+
+        <!-- <div class="snap" onclick="doSnapshot()">
+            <img id="snapbtn" src="img/camera_btn.png">
+        </div> -->
+
+       
+         <div class="attributing">
+           
+        </div>
+    </div>
+    <div id="direction-arrow">
+       <img src="images/indi.png" />
+    </div>
+    <div id="poi-detail">
+        <a class="poi-close">&times;</a>
+        <div class="clear"></div>
+
+        <div class="poi-detail-body">
+            <div><strong>Name :</strong><div id="poi-name"></div></div>
+            <div><strong>Distance :</strong><div id="poi-distance"></div></div>
+            <div><strong>Latitude :</strong><div id="poi-lat"></div></div>
+            <div><strong>Longitude :</strong><div id="poi-lon"></div></div>
+        </div>
+    </div>
+    <div id="topView" style="background-color: white">
+        <div class="navbar">
+            <!--<div id="actionbtn" class="navbtn"> &crarr; </div>-->
+            <div id="viewbtn" class="navbtn" onclick="toggleView()">Map</div>    
+            <div class="navtitle">Nearby</div> 
+        </div>
+        <div class="listView">
+            <div class="listItems"></div>
+        </div>
+        <div class="mapView">
+            <div id="map"></div>
+        </div>
+    </div>
+    <div id="debug">  
+        <div class="heading">Geolocation</div>
+        <div id="geolocation"></div>
+        <div class="heading">Compass</div>
+        <div id="compass"></div>
+        <div class="heading">Accelerometer</div>
+        <div id="accelerometer"></div>
+        <div class="heading">Log</div>
+        <div id="log"></div>
+    </div>    
+
+    <script src="js/camera.js"></script>  
+  </body>
+</html>
