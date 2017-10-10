@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Nearby</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="Copyright" content="&copy; 2013, Intel Corporation. All rights reserved." />
+    <meta name="Author" content="Rakshith Krishnappa" />
+<!--
+ * Copyright (c) 2013, Intel Corporation. All rights reserved.
+ * Please see http://software.intel.com/html5/license/samples 
+ * and the included README.md file for license terms and conditions.
+-->      
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+   <!--  <script src="https://maps.googleapis.com/maps/api/js"></script> -->
+
+   <script  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCSOaGZCX443iqTiwp9xnIxNABV6eRkVt8"> </script>
+
+    <script src="js/jquery-1.8.2.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+      <!-- <script src="https://aframe.io/releases/0.7.0/aframe.min.js"></script> -->
+     
+   <!--  <script src="cordova.js"></script> -->
+    <script>
+
+    </script>
+<style type="text/css">
+    #debugx{
+        position: fixed;
+        z-index: 9999;
+        top: 10px;
+        left: 10px;
+        border: 1px solid red;
+    }
+   
+</style>
+  </head>
+  <body id="body" style="background-color: transparent"> 
+  <div id="debugx">
+    <div id="info"></div>
+    <div id="poi-data"></div>
+  </div>
+
+
+    <video id="camera" width="100%" height="100%"></video>
+    <div id="the-loader-overlay" style=""><div>Please Wait...</div></div>
+    <div id="arView" style="background-color: transparent">
+        <!-- <div class="arMessage">&uarr;<br>Tilt down to see all places</div>
+        <br>
+        <div class="arMessage">&larr; Move the device around to find spots &rarr;</div> -->
+        <br>
+        <div id="direction"></div>
+        <br>
+        <div class="spottextc" style="margin-left: auto; margin-right: auto;">
+            <div style="width: 50px;height: 50px; border: solid 0px red; margin-top: 10px; border-radius: 10px; margin-top: 30px;">
+              
+            </div>
+        </div>
+        <br>
+        <div id="spot">
+
+
+        </div>
+
+        <!-- <div class="snap" onclick="doSnapshot()">
+            <img id="snapbtn" src="img/camera_btn.png">
+        </div> -->
+
+       
+         <div class="attributing">
+           
+        </div>
+    </div>
+    <div id="direction-arrow">
+       <img src="images/indi.png" style="max-width: 20px;"/>
+    </div>
+    <div id="poi-detail">
+        <a class="poi-close">&times;</a>
+        <div class="clear"></div>
+
+        <div class="poi-detail-body">
+            <div><strong>Name :</strong><div id="poi-name"></div></div>
+            <div><strong>Distance :</strong><div id="poi-distance"></div></div>
+            <div><strong>Latitude :</strong><div id="poi-lat"></div></div>
+            <div><strong>Longitude :</strong><div id="poi-lon"></div></div>
+        </div>
+    </div>
+    <div id="topView" style="background-color: white">
+        <div class="navbar">
+            <!--<div id="actionbtn" class="navbtn"> &crarr; </div>-->
+            <div id="viewbtn" class="navbtn" onclick="toggleView()">Map</div>    
+            <div class="navtitle">Nearby</div> 
+        </div>
+        <div class="listView">
+            <div class="listItems"></div>
+        </div>
+        <div class="mapView">
+            <div id="map"></div>
+        </div>
+    </div>
+    <div id="debug">  
+        <div class="heading">Geolocation</div>
+        <div id="geolocation"></div>
+        <div class="heading">Compass</div>
+        <div id="compass"></div>
+        <div class="heading">Accelerometer</div>
+        <div id="accelerometer"></div>
+        <div class="heading">Log</div>
+        <div id="log"></div>
+    </div>    
+
+    <script src="js/camera.js"></script>  
+    <!-- <script src="js/threejs/three.min.js"></script> -->
+    <!-- <script src="js/threejs/controls/TrackballControls.js"></script> -->
+    <!-- <script src="js/app.js"></script> -->
+    <!-- <script src="js/threejs/controls/DeviceOrientationControls.js"></script>
+    <script src="js/ar.js"></script>  -->
+  </body>
+</html>
