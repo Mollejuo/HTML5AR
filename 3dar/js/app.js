@@ -3,7 +3,9 @@ var markersArray = [], bounds;
 var myLat = 0, myLng = 0; 
 var bearing, distance;
 var dataStatus = 0; 
-var deviceorientationinterval=null;               
+var deviceorientationinterval=null;  
+var compassstatus=true;
+var c=0;
 // setup map and listen to deviceready        
 $( document ).ready(function() {
     $.get('js/data.json',function(data){
@@ -17,8 +19,7 @@ $( document ).ready(function() {
 function onDeviceReady() {
     setupMap();
     startAccelerometer();
-    startCompass();
-    
+    startCompass();    
     startGeolocation();
 }
 
@@ -105,44 +106,37 @@ function relativePosition(i){
  
     pin[i]['x'] = x;
     pin[i]['y'] = y;
-    pin[i]['z'] = distance;
     
 }
 // calculate direction of points and display        
 function calculateDirection(degree){
+    
     var detected = 0;
     var f=0;
+    if(compassstatus==false){
+        setTimeout(function(){
+            compassstatus=true;
+            document.getElementById('log').innerHTML = c++;
+        },150);
+        return;
+    }
     $("#spot").html("");    
     for(var i=0;i<pin.length;i++){
-
-        if(Math.abs(pin[i].bearing - degree) <= 80 && f==0){
+        var bearing=parseFloat(pin[i].bearing);
+        var t=Math.abs(bearing - degree);
+        if(t <= 40){
+            var bt=degree+45;
+            document.getElementById('info').innerHTML = bt;
             //$('#direction-arrow').html(degree).show();
             $('#direction-arrow').find('img').css({
-                '-ms-transform': 'rotate('+degree+'deg)',
-                '-webkit-transform': 'rotate('+degree+'deg)',
-                'transform': 'rotate('+degree+'deg)'
+                '-ms-transform': 'rotate('+bt+'deg)',
+                '-webkit-transform': 'rotate('+bt+'deg)',
+                'transform': 'rotate('+bt+'deg)'
             });
             $('#direction-arrow').show();
         }
         f=1;
-        if(Math.abs(pin[i].bearing - degree) <= 20){
-            var away, fontSize, fontColor;
-            // varry font size based on distance from gps location
-            if(pin[i].distance>1500){
-                away = Math.round(pin[i].distance);
-                fontSize = "16";
-                fontColor = "#ccc";
-            } else if(pin[i].distance>500){
-                away = Math.round(pin[i].distance);
-                fontSize = "16";
-                fontColor = "#ddd";
-            } else {
-                away = pin[i].distance.toFixed(2);
-                fontSize = "16";
-                fontColor = "#eee";
-            }
-            // get3dhtml();
-           // $("#spot").append('<div class="name poi" data-i="'+i+'" data-distance="'+away+'" data-name="'+pin[i].name+'" data-id="'+i+'" style="margin-left:'+(((pin[i].bearing - degree) * 5)+50)+'px;width:'+($(window).width()-100)+'px;font-size:'+fontSize+'px;color:'+fontColor+'">'+pin[i].name+'<div class="distance">'+ away +' miles away</div></div>');
+        if(t <= 40){
             detected = 1;
             scene.children[i].position.x=(pin[i].bearing - degree)/pin.length;
             scene.children[i].visible=true;
@@ -155,6 +149,7 @@ function calculateDirection(degree){
             }
         }
     }
+    compassstatus=false;
 
 }
 function get3dhtml(){

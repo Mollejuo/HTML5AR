@@ -71,6 +71,7 @@
         <div id="accelerometer"></div>
         <div class="heading">Log</div>
         <div id="log"></div>
+        <div class="heading">Info</div>
         <div id="info"></div>
     </div>    
 
@@ -80,6 +81,12 @@
     <script src="js/ar.js"></script> 
     <script src="js/app.js"></script>
     <script>
+    var debug=false; 
+        $(document).ready(function(){
+            if(debug==true){
+                $('#debug').show();
+            }
+        });
     function debugtoggle(){
         if($('#debug').is(':visible')){
             $('#debug').hide();
