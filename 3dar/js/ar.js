@@ -1,4 +1,4 @@
-var scene,camera,renderer,controls,raycaster,mouse;
+var scene,camera,renderer,controls,raycaster,mouse,indicator;
 var pois=[];
 var cube;
 var found=0;
@@ -31,6 +31,8 @@ initAr:function(){
 	camera.lookAt(scene.position);
 	
 	
+
+	
 	var textureLoader = new THREE.TextureLoader();
 	
 	var texture0 = textureLoader.load( 'textures/1.png' );
@@ -54,8 +56,9 @@ initAr:function(){
 	for(var i=0;i<pin.length;i++){		
 		// Combine the geometry and material into a mesh
 		var mesh = new THREE.Mesh( geometry, materials );
-		mesh.position.x = pin[i].x*100;//2;
-		mesh.position.y = Math.abs(pin[i].y*100000);//20;
+	
+		mesh.position.x =pin[i].x;//2;
+		mesh.position.y =pin[i].y;//20;
 		mesh.position.z = 0;
 		mesh.name=pin[i].name;
 		mesh.callback = function() { alert(this.name); }
@@ -92,7 +95,7 @@ initAr:function(){
 	function render() {
 		requestAnimationFrame( render );
 		for(var j=0;j<pois.length;j++){
-			//pois[j].rotation.x -= 0.03;
+			pois[j].rotation.x -= 0.03;
 			//pois[j].rotation.y -= 0.03;
 			pois[j].rotation.z += 0.03;
 		}		

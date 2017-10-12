@@ -85,9 +85,20 @@ function clearMarkers() {
     while (markersArray.length) {
         markersArray.pop().setMap(null);
     }
-}        
+}    
+
+function toRad(degrees) {
+    return degrees * Math.PI / 180;
+}
+   
+  // Converts from radians to degrees.
+function toDeg(radians) {
+    return radians * 180 / Math.PI;
+}
+
 // calulate distance and bearing value for each of the points wrt gps lat/lng        
 function relativePosition(i){
+   
     var pinLat = pin[i].lat;
     var pinLng = pin[i].lng;
     var dLat = (myLat-pinLat)* Math.PI / 180;
@@ -104,8 +115,8 @@ function relativePosition(i){
     distance = 3958.76  * c;
     pin[i]['distance'] = distance;   
  
-    pin[i]['x'] = x;
-    pin[i]['y'] = y;
+    pin[i]['x'] = x*100;
+    pin[i]['y'] = Math.abs(y*100000);  
     
 }
 // calculate direction of points and display        
@@ -125,20 +136,41 @@ function calculateDirection(degree){
         var bearing=parseFloat(pin[i].bearing);
         var t=Math.abs(bearing - degree);
         if(t <= 40){
-            var bt=degree+45;
-            document.getElementById('info').innerHTML = bt;
-            //$('#direction-arrow').html(degree).show();
+            // var bt=degree;
+            // if(pin[i].distance>=0.5){
+            //     bt=degree-50;
+            // }
+           
+           var bt=scene.children[i].position.y-degree;
+            if(scene.children[i].position.y<0){
+                 bt=scene.children[i].position.y+degree;
+            }
+            if(scene.children[i].position.y<1){
+                bt=scene.children[i].position.y-45;
+            }
+            document.getElementById('info').innerHTML =scene.children[i].position.y +"  | "+pin[i].name;
+            //$('#direction-arrow').html(degree).show();            
+           
+
             $('#direction-arrow').find('img').css({
-                '-ms-transform': 'rotate('+bt+'deg)',
-                '-webkit-transform': 'rotate('+bt+'deg)',
-                'transform': 'rotate('+bt+'deg)'
+                // '-ms-transform': 'rotate('+bt+'deg)',
+                // '-webkit-transform': 'rotate('+bt+'deg)',
+                // 'transform': 'rotate('+bt+'deg)'
+                '-webkit-transform':'rotate('+bt+'deg)',
+                '-moz-transform': 'rotate('+bt+'deg)',
+               '-ms-transform': 'rotate('+bt+'deg)',
+               '-o-transform': 'rotate('+bt+'deg)',
+               'transform': 'rotate('+bt+'deg)',
             });
+            
             $('#direction-arrow').show();
         }
         f=1;
         if(t <= 40){
             detected = 1;
-            scene.children[i].position.x=(pin[i].bearing - degree)/pin.length;
+            var x=(pin[i].bearing - degree)/pin.length;
+          
+            scene.children[i].position.x=x;
             scene.children[i].visible=true;
         } else {
            
@@ -235,7 +267,7 @@ function onCompassSuccess(eventdata) {
     }                
     var directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'N'];
     var direction = directions[Math.abs(parseInt((compassdir) / 45) + 1)];
-    document.getElementById('compass').innerHTML = compassdir + "<br>" + direction;
+    document.getElementById('compass').innerHTML = compassdir + "<br>" + direction+"<br>"+event.alpha+"<br>"+event.beta+"<br>"+event.gamma;
     //document.getElementById('direction').innerHTML = direction;
     var degree = Math.round(compassdir);                  
     calculateDirection(degree);                 
