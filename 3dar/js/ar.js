@@ -31,26 +31,29 @@ initAr:function(){
 	camera.lookAt(scene.position);
 	
 	
-	var texture = new THREE.TextureLoader().load( "images/subway.png" );	
+	var textureLoader = new THREE.TextureLoader();
+	
+	var texture0 = textureLoader.load( 'textures/1.png' );
+	var texture1 = textureLoader.load( 'textures/2.png' );
+	var texture2 = textureLoader.load( 'textures/3.png' );
+	var texture3 = textureLoader.load( 'textures/4.png' );
+	var texture4 = textureLoader.load( 'textures/5.png' );
+	var texture5 = textureLoader.load( 'textures/6.png' );
+	
+	var materials = [
+		new THREE.MeshBasicMaterial( { map: texture0 } ),
+		new THREE.MeshBasicMaterial( { map: texture1 } ),
+		new THREE.MeshBasicMaterial( { map: texture2 } ),
+		new THREE.MeshBasicMaterial( { map: texture3 } ),
+		new THREE.MeshBasicMaterial( { map: texture4 } ),
+		new THREE.MeshBasicMaterial( { map: texture5 } )
+	];
+	
 	var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 
-
 	for(var i=0;i<pin.length;i++){		
-		//var c=(i+5)/100 * 0xffffff;
-		// var cubeMaterial = new THREE.MeshBasicMaterial({color: c}); 
-		// cube = new THREE.Mesh(cubeGeometry,cubeMaterial);		
-		// //cube.castShadow = true;
-		// cube.position.x = pin[i].x*100;//2;
-		// cube.position.y = Math.abs(pin[i].y*100000);//20;
-		// cube.position.z = 0;
-		// scene.add(cube);		
-		// pois.push(cube);
-		//scene.children[i].visible=false;	
-
-		
-		var material = new THREE.MeshBasicMaterial({map: texture} );
 		// Combine the geometry and material into a mesh
-		var mesh = new THREE.Mesh( geometry, material );
+		var mesh = new THREE.Mesh( geometry, materials );
 		mesh.position.x = pin[i].x*100;//2;
 		mesh.position.y = Math.abs(pin[i].y*100000);//20;
 		mesh.position.z = 0;
@@ -89,8 +92,9 @@ initAr:function(){
 	function render() {
 		requestAnimationFrame( render );
 		for(var j=0;j<pois.length;j++){
-			pois[j].rotation.x += 0.03;
-			pois[j].rotation.y += 0.03;
+			//pois[j].rotation.x -= 0.03;
+			//pois[j].rotation.y -= 0.03;
+			pois[j].rotation.z += 0.03;
 		}		
 		renderer.render( scene, camera );					
 	}
