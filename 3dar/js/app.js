@@ -115,82 +115,58 @@ function relativePosition(i){
     distance = 3958.76  * c;
     pin[i]['distance'] = distance;   
  
-    pin[i]['x'] = x*100;
-    pin[i]['y'] = Math.abs(y*100000);  
+    pin[i]['x'] =x; //x*100;
+    pin[i]['y'] =y; //Math.abs(y*100000);  
     
 }
 // calculate direction of points and display        
 function calculateDirection(degree){
-    
-    var detected = 0;
-    var f=0;
-    if(compassstatus==false){
-        setTimeout(function(){
-            compassstatus=true;
-            document.getElementById('log').innerHTML = c++;
-        },150);
-        return;
-    }
-    $("#spot").html("");    
-    for(var i=0;i<pin.length;i++){
-        var bearing=parseFloat(pin[i].bearing);
-        var t=Math.abs(bearing - degree);
-        if(t <= 40){
-            // var bt=degree;
-            // if(pin[i].distance>=0.5){
-            //     bt=degree-50;
-            // }
-           
-           var bt=scene.children[i].position.y-degree;
-            if(scene.children[i].position.y<0){
-                 bt=scene.children[i].position.y+degree;
-            }
-            if(scene.children[i].position.y<1){
-                bt=scene.children[i].position.y-45;
-            }
-            document.getElementById('info').innerHTML =scene.children[i].position.y +"  | "+pin[i].name;
-            //$('#direction-arrow').html(degree).show();            
-           
 
-            $('#direction-arrow').find('img').css({
-                // '-ms-transform': 'rotate('+bt+'deg)',
-                // '-webkit-transform': 'rotate('+bt+'deg)',
-                // 'transform': 'rotate('+bt+'deg)'
-                '-webkit-transform':'rotate('+bt+'deg)',
-                '-moz-transform': 'rotate('+bt+'deg)',
-               '-ms-transform': 'rotate('+bt+'deg)',
-               '-o-transform': 'rotate('+bt+'deg)',
-               'transform': 'rotate('+bt+'deg)',
-            });
-            
-            $('#direction-arrow').show();
+    var detected = 0;
+    var f=0; 
+    $("#spot").html(""); 
+    for(var i=0;i<pois.length;i++){
+        var bearing=parseFloat(pois[i].pinData.bearing);
+        var t=Math.abs(bearing - degree);
+        if(t <= 80){         
+           // var bt=pois[0].position.x+180;
+            var deltaX = pois[i].position.x - 0;
+            var deltaY =pois[i].position.y - 14;
+            var rotation = toDeg(Math.atan2(deltaX, deltaY));
+            var bt=rotation;
+            //indicator.material.rotation=bt;
+            //document.getElementById('info').innerHTML=bt;
+             $('#direction-arrow').find('img').css({
+                 '-webkit-transform':'rotate('+bt+'deg)',
+                 '-moz-transform': 'rotate('+bt+'deg)',
+                 '-ms-transform': 'rotate('+bt+'deg)',
+                 '-o-transform': 'rotate('+bt+'deg)',
+                 'transform': 'rotate('+bt+'deg)',
+             });
+             
+             document.getElementById('info').innerHTML=pois[i].pinData.name;
+            //  $('#direction-arrow').show();
         }
-        f=1;
+
         if(t <= 40){
             detected = 1;
-            var x=(pin[i].bearing - degree)/pin.length;
-          
-            scene.children[i].position.x=x;
-            scene.children[i].visible=true;
-        } else {
-           
-           if(scene && scene.children.length>=i)
-              scene.children[i].visible=false;
+            var x=(pois[i].pinData.bearing - degree)/pois.length;          
+            pois[i].position.x=x;
+            pois[i].visible=true;
+        } else {           
+           if(pois.length>=i)
+              pois[i].visible=false;
             if(!detected){
                 $("#spot").html("");
             }
         }
-    }
-    compassstatus=false;
+        
+    }  
+      
+  
 
 }
-function get3dhtml(){
-    return "<a-scene embedded arjs='sourceType: webcam;'>"+
-            "<a-box position='0 0.2 0' material='opacity: 0.5;'></a-box>"+
-            "<a-marker-camera preset='hiro'></a-marker-camera>"+
-            "</a-scene>";
-    return '<iframe style="float:left;" src="d3.php" width="100" height="100" frameborder="0" allowfullscreen="true"></iframe>';
-}
+
 $(document).on('click','.poi',function(e){
 
     var i=$(this).attr('data-i');
@@ -269,8 +245,15 @@ function onCompassSuccess(eventdata) {
     var direction = directions[Math.abs(parseInt((compassdir) / 45) + 1)];
     document.getElementById('compass').innerHTML = compassdir + "<br>" + direction+"<br>"+event.alpha+"<br>"+event.beta+"<br>"+event.gamma;
     //document.getElementById('direction').innerHTML = direction;
-    var degree = Math.round(compassdir);                  
-    calculateDirection(degree);                 
+    var degree = Math.round(compassdir);               
+          
+    window.removeEventListener('deviceorientation', onCompassSuccess,true);  
+
+    setTimeout(function(){
+        window.addEventListener('deviceorientation', onCompassSuccess,true);   
+    },110);
+    calculateDirection(degree); 
+    document.getElementById('log').innerHTML = 110;
   }
 // onError: Failed to get the heading
 function onCompassError(compassError) {
@@ -293,16 +276,16 @@ function stopAccelerometer() {
 // onSuccess: Get current accelerometer values
 function onAccelerometerSuccess(acceleration) {
     // for debug purpose to print out accelerometer values
-    var element = document.getElementById('accelerometer');
-    element.innerHTML = 'Acceleration X: ' + acceleration.accelerationIncludingGravity.x + '<br />' +
-                        'Acceleration Y: ' + acceleration.accelerationIncludingGravity.y + '<br />' +
-                        'Acceleration Z: ' + acceleration.accelerationIncludingGravity.z ;
-    if(acceleration.accelerationIncludingGravity.y > 7){
-        $("#arView").fadeIn();
-        $("#topView").hide();
-        document.getElementById('body').style.background = "#d22";
-        document.getElementById('body').style.background = "transparent";
-    } 
+    // var element = document.getElementById('accelerometer');
+    // element.innerHTML = 'Acceleration X: ' + acceleration.accelerationIncludingGravity.x + '<br />' +
+    //                     'Acceleration Y: ' + acceleration.accelerationIncludingGravity.y + '<br />' +
+    //                     'Acceleration Z: ' + acceleration.accelerationIncludingGravity.z ;
+    // if(acceleration.accelerationIncludingGravity.y > 7){
+    //     $("#arView").fadeIn();
+    //     $("#topView").hide();
+    //     document.getElementById('body').style.background = "#d22";
+    //     document.getElementById('body').style.background = "transparent";
+    // } 
 }
 // onError: Failed to get the acceleration
 function onAccelerometerError() {

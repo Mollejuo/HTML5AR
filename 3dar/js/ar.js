@@ -5,7 +5,7 @@ var found=0;
 var degree=0; 
 var watchGeoID=null;
 window.compassslow=0;
-
+var pin_index=1;
 function ecef(lat,lon){
 	var R=1000;
 	var x = R * Math.cos(lat) * Math.cos(lon);
@@ -29,10 +29,7 @@ initAr:function(){
 	camera.position.y = 40;
 	camera.position.z = 30;
 	camera.lookAt(scene.position);
-	
-	
-
-	
+		
 	var textureLoader = new THREE.TextureLoader();
 	
 	var texture0 = textureLoader.load( 'textures/1.png' );
@@ -55,16 +52,16 @@ initAr:function(){
 
 	for(var i=0;i<pin.length;i++){		
 		// Combine the geometry and material into a mesh
-		var mesh = new THREE.Mesh( geometry, materials );
-	
+		var mesh = new THREE.Mesh( geometry, materials );	
 		mesh.position.x =pin[i].x;//2;
 		mesh.position.y =pin[i].y;//20;
 		mesh.position.z = 0;
 		mesh.name=pin[i].name;
-		mesh.callback = function() { alert(this.name); }
-		// Add the mesh to the scene
+		mesh.pinData=pin[i];
+		mesh.callback = function() { alert(this.name); };
+		// Add the mesh to the scene		
 		scene.add( mesh );
-		pois.push(mesh);
+		pois.push(scene.children[i]);
 	}
 
 	raycaster = new THREE.Raycaster();
@@ -98,6 +95,7 @@ initAr:function(){
 			pois[j].rotation.x -= 0.03;
 			//pois[j].rotation.y -= 0.03;
 			pois[j].rotation.z += 0.03;
+		
 		}		
 		renderer.render( scene, camera );					
 	}
@@ -109,8 +107,26 @@ initAr:function(){
 	
 
 	scene.children.map(function(item){
-		return item.visible=false;
+			return item.visible=false;
 	});
+
+	// var map = new THREE.TextureLoader().load( "images/indi.png" );
+	// var material = new THREE.SpriteMaterial( { map: map, color: 0xffffff, fog: true } );
+	// var sprite = new THREE.Sprite( material );
+	// sprite.position.y=33;
+	// sprite.scale.x = 3;
+	// sprite.scale.y = 3;
+	// var l=scene.children.length;
+	// scene.add( sprite );
+	// indicator=scene.children[l];
+
+
+	// var gm = new THREE.BoxGeometry( 10, 10, 10 );
+	// indicator = new THREE.Mesh( gm, new THREE.MeshBasicMaterial( { color: 0x444444 } ) );	
+	// indicator.position.y=33;
+	// var l=scene.children.length;
+	// scene.add( indicator );
+	// indicator=scene.children[l];
 	
  }   
 };
