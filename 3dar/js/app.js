@@ -143,9 +143,23 @@ function calculateDirection(degree){
                  '-o-transform': 'rotate('+bt+'deg)',
                  'transform': 'rotate('+bt+'deg)',
              });
-             
+             //$('#direction-arrow').hide();
+             var direction_text="";
+             if(bt<45 && bt>=315)
+                 direction_text="Move the phone to the Up";          
+             if(bt<225 && bt<=315)     
+                 direction_text="Move the phone to the Left";
+             if(bt>135 && bt <=225)
+                direction_text="Move the phone to the Down";
+                
+             if(bt>=45 && bt<=135)
+                direction_text="Move the phone to the Right";
+              $('#direction-text').html(direction_text).show();
+
              document.getElementById('info').innerHTML=pois[i].pinData.name;
             //  $('#direction-arrow').show();
+        }else{
+            $('#direction-text').hide();
         }
 
         if(t <= 40){
