@@ -11,13 +11,13 @@
    <script  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCSOaGZCX443iqTiwp9xnIxNABV6eRkVt8"> </script>
 
     <script src="js/jquery-1.8.2.min.js"></script>
-
     <link rel="stylesheet" type="text/css" href="css/style.css">
     
   </head>
   <body id="body" style="background-color: transparent"> 
     <button id="toggleDebug" style="position: fixed;right: 4px;top: 4px;display:none;" onclick="debugtoggle();">Debug View</button>
     <video id="camera" width="100%" height="100%"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
     <div id="the-loader-overlay" style=""><div>Please Wait...</div></div>
     <div id="arView" style="background-color: transparent">
         <!-- <div class="arMessage">&uarr;<br>Tilt down to see all places</div>
@@ -36,14 +36,20 @@
          <div class="attributing"></div>
     </div>
 
+    <div class="buttons" style="display: none;">
+         <button class="left" onclick="plus()">+</button>        
+         <button onclick="saveAsImage()">Screenshot</button>
+         <button class="right" onclick="minus()">-</button>
+    </div>
 
-    <div id="direction-arrow">
+
+    <!-- <div id="direction-arrow">
        <img src="images/indi.png"  />
-    </div>
+    </div> -->
 
-    <div id="direction-text-container">
+    <!-- <div id="direction-text-container">
             <div id="direction-text">Move the phone to the text</div>
-    </div>
+    </div> -->
 
     <div id="poi-detail">
         <a class="poi-close">&times;</a>
@@ -86,7 +92,7 @@
     <script src="js/threejs/three.min.js"></script> 
     <script src="js/threejs/controls/DeviceOrientationControls.js"></script>
     <script src="js/ar.js"></script> 
-    <script src="js/app.js"></script>
+   <!--  <script src="js/app.js"></script> -->
     <script>
     var debug=false; 
         $(document).ready(function(){
@@ -94,6 +100,7 @@
                 $('#debug').show();
             }
         });
+
     function debugtoggle(){
         if($('#debug').is(':visible')){
             $('#debug').hide();

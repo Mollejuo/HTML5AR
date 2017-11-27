@@ -232,3 +232,31 @@ video {
     border-radius: 40px;
     margin: 10px auto;
 }
+
+.buttons{
+    position: fixed;
+    bottom: 10px;
+    text-align: center;
+    width: 100%;
+}
+.buttons button{
+    font-size: 2em;
+    background-color: rgba(0,0,0,0.5);
+    border: 0px;
+    color: #fff;
+    padding: 5px 10px;
+}
+
+.text-right{
+    text-align: right;
+}
+.text-left{
+    text-align: left;
+}
+
+.left{
+    float: left;
+}
+.right{
+    float: right;
+}

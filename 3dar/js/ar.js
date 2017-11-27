@@ -6,6 +6,9 @@ var degree=0;
 var watchGeoID=null;
 window.compassslow=0;
 var pin_index=1;
+var strDownloadMime = "image/octet-stream";
+var pin=[{"name":"N Block", "lat":31.477228, "lng":74.311368}];
+var tapped=false;
 function ecef(lat,lon){
 	var R=1000;
 	var x = R * Math.cos(lat) * Math.cos(lon);
@@ -20,16 +23,16 @@ initAr:function(){
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 	//controls = new THREE.DeviceOrientationControls( camera );
 	
-	renderer = new THREE.WebGLRenderer( { alpha: true } );
+	renderer = new THREE.WebGLRenderer( { alpha: true ,preserveDrawingBuffer: true} );
 
 
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapSoft = true;   
-	camera.position.x = -30;
-	camera.position.y = 40;
-	camera.position.z = 30;
+	// camera.position.x = -30;
+	// camera.position.y = 40;
+	// camera.position.z = 30;
 	camera.lookAt(scene.position);
-		
+	
 	var textureLoader = new THREE.TextureLoader();
 	
 	var texture0 = textureLoader.load( 'textures/1.png' );
@@ -50,35 +53,33 @@ initAr:function(){
 	
 	var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 
-	for(var i=0;i<pin.length;i++){		
-		// Combine the geometry and material into a mesh
-		var mesh = new THREE.Mesh( geometry, materials );	
-		mesh.position.x =pin[i].x;//2;
-		mesh.position.y =pin[i].y;//20;
-		mesh.position.z = 0;
-		mesh.name=pin[i].name;
-		mesh.pinData=pin[i];
-		mesh.callback = function() { alert(this.name); };
-		// Add the mesh to the scene		
-		scene.add( mesh );
-		pois.push(scene.children[i]);
-	}
-
 	raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
-	document.addEventListener('mousedown', onDocumentMouseDown, false);
-	document.addEventListener('touchstart', onDocumentTouchStart, false);
 
-	function onDocumentMouseDown( event ) {		
-			event.preventDefault();		
-			mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
-			mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;		
-			raycaster.setFromCamera( mouse, camera );	
-			var objects=scene.children;	
-			var intersects = raycaster.intersectObjects( objects ); 		
-			if ( intersects.length > 0 ) {		
-				intersects[0].object.callback();		
-			}		
+
+	document.addEventListener('mousedown', onDocumentMouseDown, false);
+	//document.addEventListener('touchstart', onDocumentTouchStart, false);
+
+	function onDocumentMouseDown( event ) {	
+			//event.preventDefault();
+			if(!tapped){		
+				mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;		
+				raycaster.setFromCamera( mouse, camera );	
+				var dir = raycaster.ray.direction;
+				var mesh = new THREE.Mesh( geometry, materials );	
+				mesh.position.x =dir.x*100;
+				mesh.position.y =dir.y*100;
+				mesh.position.z = dir.z*100;	
+				scene.add( mesh );		
+				$('.buttons').show();
+				var objects=scene.children;	
+				var intersects = raycaster.intersectObjects( objects ); 		
+				if ( intersects.length > 0 ) {		
+							
+				}	
+			}	
+			tapped=true;
 	}
 
 	function onDocumentTouchStart(event) {
@@ -92,9 +93,9 @@ initAr:function(){
 	function render() {
 		requestAnimationFrame( render );
 		for(var j=0;j<pois.length;j++){
-			pois[j].rotation.x -= 0.03;
+			//pois[j].rotation.x -= 0.03;
 			//pois[j].rotation.y -= 0.03;
-			pois[j].rotation.z += 0.03;
+			//pois[j].rotation.z += 0.03;
 		
 		}		
 		renderer.render( scene, camera );					
@@ -106,31 +107,59 @@ initAr:function(){
 	renderer.render(scene,camera);   
 	
 
-	scene.children.map(function(item){
-			return item.visible=false;
-	});
-
-	// var map = new THREE.TextureLoader().load( "images/indi.png" );
-	// var material = new THREE.SpriteMaterial( { map: map, color: 0xffffff, fog: true } );
-	// var sprite = new THREE.Sprite( material );
-	// sprite.position.y=33;
-	// sprite.scale.x = 3;
-	// sprite.scale.y = 3;
-	// var l=scene.children.length;
-	// scene.add( sprite );
-	// indicator=scene.children[l];
-
-
-	// var gm = new THREE.BoxGeometry( 10, 10, 10 );
-	// indicator = new THREE.Mesh( gm, new THREE.MeshBasicMaterial( { color: 0x444444 } ) );	
-	// indicator.position.y=33;
-	// var l=scene.children.length;
-	// scene.add( indicator );
-	// indicator=scene.children[l];
+	// scene.children.map(function(item){
+	// 		return item.visible=false;
+	// });
 	
  }   
 };
 
+function plus(){
+	scene.children[0].scale.x+=0.2;
+	scene.children[0].scale.y+=0.2;
+	scene.children[0].scale.z+=0.2;
+}
+function minus(){
+	scene.children[0].scale.x-=0.2;
+	scene.children[0].scale.y-=0.2;
+	scene.children[0].scale.z-=0.2;
+}
 
+
+function saveAsImage() {   
+	var image_width=window.innerWidth, image_height=window.innerHeight;
+	var canvas = document.getElementById('canvas');
+	canvas.width=image_width;
+	canvas.height = image_height;
+
+	var context = canvas.getContext('2d');
+	var video = document.getElementById('camera');
+	context.drawImage(video, 0, 0, image_width, image_height);
+	context.drawImage(renderer.domElement, 0, 0,image_width, image_height);
+	var strMime = "image/jpeg";
+	try {
+	    imgData = canvas.toDataURL(strMime);
+	    var strData=imgData.replace(strMime, strDownloadMime);
+	    var filename="screenshot.jpg";
+	    var link = document.createElement('a');
+	    if (typeof link.download === 'string') {
+		    document.body.appendChild(link); //Firefox requires the link to be in the body
+	        link.download = filename;
+	        link.href = strData;
+	        link.click();
+	        document.body.removeChild(link); //remove the link when done
+		} else {
+		    location.replace(uri);
+	    }
+	} catch (e) {
+        console.log(e);
+        return;
+    }
+
+
+}
+
+
+AR.initAr();
 
 
